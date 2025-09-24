@@ -1,3 +1,7 @@
 streamlit
 gspread
 google-auth
+pyzbar
+opencv-python
+pillow
+numpy
