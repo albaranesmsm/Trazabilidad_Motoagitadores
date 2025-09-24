@@ -3,8 +3,7 @@ import gspread
 from google.oauth2.service_account import Credentials
 from datetime import datetime
 from PIL import Image
-import numpy as np
-import cv2
+from pyzbar.pyzbar import decode
 # =======================
 # CONFIGURAR GOOGLE SHEETS
 # =======================
@@ -52,7 +51,7 @@ def get_worksheet(title):
        return spreadsheet.add_worksheet(title=title, rows="1000", cols="3")
 worksheet = get_worksheet(tipo)
 # =======================
-# Lector de QR múltiple con OpenCV
+# Lector de QR múltiple con pyzbar
 # =======================
 st.subheader("📷 Escanea los QR de los equipos")
 if "serie_leidas" not in st.session_state:
@@ -60,20 +59,18 @@ if "serie_leidas" not in st.session_state:
 uploaded_file = st.camera_input("Abre la cámara para escanear QR:")
 if uploaded_file is not None:
    image = Image.open(uploaded_file)
-   image_np = np.array(image)
-   # Crear detector de QR con OpenCV
-   detector = cv2.QRCodeDetector()
-   data, bbox, _ = detector.detectAndDecode(image_np)
-   if data:
-       numero_serie = data.strip()
-       if numero_serie not in st.session_state.serie_leidas:
-           # Registrar en Google Sheets
-           fecha = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-           worksheet.append_row([numero_serie, taller, fecha])
-           st.session_state.serie_leidas.append(numero_serie)
-           st.success(f"✅ Registrado número de serie: {numero_serie}")
-       else:
-           st.info(f"🔁 El número de serie {numero_serie} ya ha sido registrado")
+   decoded_objects = decode(image)
+   if decoded_objects:
+       for obj in decoded_objects:
+           numero_serie = obj.data.decode("utf-8").strip()
+           if numero_serie not in st.session_state.serie_leidas:
+               # Registrar en Google Sheets
+               fecha = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+               worksheet.append_row([numero_serie, taller, fecha])
+               st.session_state.serie_leidas.append(numero_serie)
+               st.success(f"✅ Registrado número de serie: {numero_serie}")
+           else:
+               st.info(f"🔁 El número de serie {numero_serie} ya ha sido registrado")
    else:
        st.warning("No se pudo leer ningún QR. Intenta de nuevo.")
 # Mostrar los números de serie registrados en esta sesión
