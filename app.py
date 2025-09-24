@@ -2,7 +2,9 @@ import streamlit as st
 import gspread
 from google.oauth2.service_account import Credentials
 from datetime import datetime
-import os
+from pyzbar.pyzbar import decode
+from PIL import Image
+import numpy as np
 # =======================
 # CONFIGURAR GOOGLE SHEETS
 # =======================
@@ -24,7 +26,6 @@ creds = Credentials.from_service_account_info(
    scopes=["https://www.googleapis.com/auth/spreadsheets"]
 )
 client = gspread.authorize(creds)
-# Abrir Google Sheet
 SHEET_ID = "1st-BhcBfkLmvnxJZVHQOtOSfH9aa-Ke0ZHX85kH77x4"
 spreadsheet = client.open_by_key(SHEET_ID)
 # =======================
@@ -41,23 +42,41 @@ taller = st.selectbox(
    "Selecciona el Taller/BO:",
    ["ECESA", "Jocertec", "Tecbecar", "Cervetecnica"]
 )
-# Pregunta 3
-numero_serie = st.text_input(
-   "Introduce o escanea el número de serie:"
-)
-# Botón enviar
-if st.button("Registrar"):
-   if not numero_serie:
-       st.error("⚠️ Debes introducir un número de serie.")
+# =======================
+# Función para obtener hoja
+# =======================
+def get_worksheet(title):
+   try:
+       return spreadsheet.worksheet(title)
+   except gspread.exceptions.WorksheetNotFound:
+       return spreadsheet.add_worksheet(title=title, rows="1000", cols="3")
+worksheet = get_worksheet(tipo)
+# =======================
+# Lector de QR múltiple
+# =======================
+st.subheader("📷 Escanea los QR de los equipos")
+if "serie_leidas" not in st.session_state:
+   st.session_state.serie_leidas = []
+uploaded_file = st.camera_input("Abre la cámara para escanear QR:")
+if uploaded_file is not None:
+   image = Image.open(uploaded_file)
+   image_np = np.array(image)
+   decoded_objects = decode(image_np)
+   if decoded_objects:
+       for obj in decoded_objects:
+           numero_serie = obj.data.decode("utf-8")
+           if numero_serie not in st.session_state.serie_leidas:
+               # Registrar en Google Sheets
+               fecha = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+               worksheet.append_row([numero_serie, taller, fecha])
+               st.session_state.serie_leidas.append(numero_serie)
+               st.success(f"✅ Registrado número de serie: {numero_serie}")
+           else:
+               st.info(f"🔁 El número de serie {numero_serie} ya ha sido registrado")
    else:
-       # Seleccionar hoja según la pregunta 1
-       if tipo == "Instalación":
-           worksheet = spreadsheet.worksheet("Instalacion")
-       elif tipo == "Reparación":
-           worksheet = spreadsheet.worksheet("Reparacion")
-       else:
-           worksheet = spreadsheet.worksheet("Incidencia")
-       # Registrar datos
-       fecha = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-       worksheet.append_row([numero_serie, taller, fecha])
-       st.success(f"✅ Número de serie **{numero_serie}** registrado en hoja **{tipo}**")
+       st.warning("No se pudo leer ningún QR. Intenta de nuevo.")
+# Mostrar los números de serie registrados en esta sesión
+if st.session_state.serie_leidas:
+   st.subheader("Números de serie registrados en esta sesión:")
+   for i, s in enumerate(st.session_state.serie_leidas, 1):
+       st.text(f"{i}. {s}")
