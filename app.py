@@ -33,12 +33,15 @@ spreadsheet = client.open_by_key(SHEET_ID)
 # =======================
 @st.cache_data
 def load_talleres(path="data/talleres.xlsx"):
-   """Carga el Excel de talleres si existe"""
+   """Carga el Excel de talleres y normaliza los datos"""
    if not os.path.exists(path):
        st.error(f"No se encuentra el archivo requerido: {path}")
        return pd.DataFrame(columns=["Codigo", "Nombre", "Tipo"])
    try:
-       df = pd.read_excel(path)
+       df = pd.read_excel(path, dtype=str)  # Forzar todo a string
+       df["Codigo"] = df["Codigo"].str.strip()  # Quitar espacios
+       df["Nombre"] = df["Nombre"].str.strip()
+       df["Tipo"] = df["Tipo"].str.strip()
        return df
    except Exception as e:
        st.error(f"No se pudo cargar el Excel de talleres: {e}")
@@ -65,6 +68,7 @@ if st.session_state.pantalla == "inicio":
    st.title("🔑 Validación de Almacén")
    codigo_input = st.text_input("Introduce el código de almacén:")
    if codigo_input:
+       codigo_input = str(codigo_input).strip()  # Convertir a string y quitar espacios
        row = talleres_df.loc[talleres_df["Codigo"] == codigo_input]
        if not row.empty:
            nombre = row.iloc[0]["Nombre"]
