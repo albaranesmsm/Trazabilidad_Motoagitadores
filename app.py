@@ -4,6 +4,7 @@ import pandas as pd
 from google.oauth2.service_account import Credentials
 from datetime import datetime
 import pytz
+import os
 # =======================
 # CONFIGURAR GOOGLE SHEETS
 # =======================
@@ -28,14 +29,15 @@ client = gspread.authorize(creds)
 SHEET_ID = "1st-BhcBfkLmvnxJZVHQOtOSfH9aa-Ke0ZHX85kH77x4"
 spreadsheet = client.open_by_key(SHEET_ID)
 # =======================
-# CARGAR DATOS DE TALLERES/BO DESDE GITHUB
+# CARGAR DATOS DE TALLERES/BO LOCALMENTE
 # =======================
 @st.cache_data
-def load_talleres():
-   url = "https://raw.githubusercontent.com/TU_USUARIO/TU_REPO/main/talleres.csv"
-   df = pd.read_csv(url)
-   # Esperamos columnas: Codigo, Nombre, Tipo (BO/TALLER)
-   return df
+def load_talleres(path="data/talleres.csv"):
+   """Carga el CSV de talleres si existe"""
+   if not os.path.exists(path):
+       st.error(f"No se encuentra el archivo requerido: {path}")
+       return pd.DataFrame(columns=["Codigo", "Nombre", "Tipo"])
+   return pd.read_csv(path)
 talleres_df = load_talleres()
 # =======================
 # FUNCIÓN PARA OBTENER HOJA
@@ -75,7 +77,7 @@ if st.session_state.pantalla == "inicio":
                st.session_state.pantalla = "registro"
                st.rerun()
        else:
-           st.error("❌ Código no encontrado en el Excel de talleres/BO.")
+           st.error("❌ Código no encontrado en el CSV de talleres/BO.")
 # =======================
 # PANTALLA 2: REGISTRO DE NÚMEROS DE SERIE
 # =======================
