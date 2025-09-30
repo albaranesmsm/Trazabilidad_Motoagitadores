@@ -1,6 +1,8 @@
 streamlit
 gspread
 google-auth
+openpyxl
 pandas
 pytz
+
 
