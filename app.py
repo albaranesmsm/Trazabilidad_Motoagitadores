@@ -65,8 +65,8 @@ if "tipo" not in st.session_state:
 if "taller_nombre" not in st.session_state:
    st.session_state.taller_nombre = None
 if st.session_state.pantalla == "inicio":
-   st.title("🔑 Validación de Almacén")
-   codigo_input = st.text_input("Introduce el código de almacén:")
+   st.title("🔑 Base operativa / Taller")
+   codigo_input = st.text_input("Introduce el código de almacén SGR:")
    if codigo_input:
        codigo_input = str(codigo_input).strip()  # Convertir a string y quitar espacios
        row = talleres_df.loc[talleres_df["Codigo"] == codigo_input]
@@ -115,3 +115,4 @@ if st.session_state.pantalla == "registro":
        st.subheader("Números de serie registrados en esta sesión:")
        for i, s in enumerate(st.session_state.serie_leidas, 1):
            st.text(f"{i}. {s}")
+
