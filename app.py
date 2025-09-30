@@ -51,7 +51,7 @@ worksheet = get_worksheet(tipo)
 # =======================
 # Registro de números de serie
 # =======================
-st.subheader("🔹 Introduce los números de serie (puede ser vía teclado o lector QR)")
+st.subheader("🔹 Introduce los números de serie")
 if "serie_leidas" not in st.session_state:
    st.session_state.serie_leidas = []
 # Input de número de serie
@@ -71,3 +71,4 @@ if st.session_state.serie_leidas:
    st.subheader("Números de serie registrados en esta sesión:")
    for i, s in enumerate(st.session_state.serie_leidas, 1):
        st.text(f"{i}. {s}")
+
