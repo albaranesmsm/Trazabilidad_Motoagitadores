@@ -65,7 +65,7 @@ if "tipo" not in st.session_state:
 if "taller_nombre" not in st.session_state:
    st.session_state.taller_nombre = None
 if st.session_state.pantalla == "inicio":
-   st.title("🔑 Base operativa / Taller")
+   st.title("🔑 Base operativa - Taller")
    codigo_input = st.text_input("Introduce el código de almacén SGR:")
    if codigo_input:
        codigo_input = str(codigo_input).strip()  # Convertir a string y quitar espacios
@@ -78,7 +78,7 @@ if st.session_state.pantalla == "inicio":
                tipo = st.radio("Selecciona el tipo de registro:", ["Instalación", "Incidencia"])
            else:  # TALLER
                tipo = "Reparación"
-               st.info("🔧 Tipo de registro asignado automáticamente: Reparación")
+               st.info("🔧Reparación")
            if st.button("Continuar ➡️"):
                st.session_state.tipo = tipo
                st.session_state.taller_nombre = nombre
@@ -86,7 +86,7 @@ if st.session_state.pantalla == "inicio":
                st.session_state.pantalla = "registro"
                st.rerun()
        else:
-           st.error("❌ Código no encontrado en el Excel de talleres/BO.")
+           st.error("❌ Almacén no autorizado para la operación ")
 # =======================
 # PANTALLA 2: REGISTRO DE NÚMEROS DE SERIE
 # =======================
@@ -112,7 +112,8 @@ if st.session_state.pantalla == "registro":
        else:
            st.info(f"🔁 El número de serie {numero_serie} ya ha sido registrado en esta sesión.")
    if st.session_state.serie_leidas:
-       st.subheader("Números de serie registrados en esta sesión:")
+       st.subheader("Números de serie registrados:")
        for i, s in enumerate(st.session_state.serie_leidas, 1):
            st.text(f"{i}. {s}")
+
 
