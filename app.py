@@ -29,15 +29,20 @@ client = gspread.authorize(creds)
 SHEET_ID = "1st-BhcBfkLmvnxJZVHQOtOSfH9aa-Ke0ZHX85kH77x4"
 spreadsheet = client.open_by_key(SHEET_ID)
 # =======================
-# CARGAR DATOS DE TALLERES/BO LOCALMENTE
+# CARGAR DATOS DE TALLERES/BO DESDE EXCEL
 # =======================
 @st.cache_data
-def load_talleres(path="data/talleres.csv"):
-   """Carga el CSV de talleres si existe"""
+def load_talleres(path="data/talleres.xlsx"):
+   """Carga el Excel de talleres si existe"""
    if not os.path.exists(path):
        st.error(f"No se encuentra el archivo requerido: {path}")
        return pd.DataFrame(columns=["Codigo", "Nombre", "Tipo"])
-   return pd.read_csv(path)
+   try:
+       df = pd.read_excel(path)
+       return df
+   except Exception as e:
+       st.error(f"No se pudo cargar el Excel de talleres: {e}")
+       return pd.DataFrame(columns=["Codigo", "Nombre", "Tipo"])
 talleres_df = load_talleres()
 # =======================
 # FUNCIÓN PARA OBTENER HOJA
@@ -77,7 +82,7 @@ if st.session_state.pantalla == "inicio":
                st.session_state.pantalla = "registro"
                st.rerun()
        else:
-           st.error("❌ Código no encontrado en el CSV de talleres/BO.")
+           st.error("❌ Código no encontrado en el Excel de talleres/BO.")
 # =======================
 # PANTALLA 2: REGISTRO DE NÚMEROS DE SERIE
 # =======================
