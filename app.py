@@ -29,7 +29,7 @@ client = gspread.authorize(creds)
 SHEET_ID = "1st-BhcBfkLmvnxJZVHQOtOSfH9aa-Ke0ZHX85kH77x4"
 spreadsheet = client.open_by_key(SHEET_ID)
 # =======================
-# CARGAR DATOS DE TALLERES/BO DESDE EXCEL LOCAL
+# CARGAR DATOS DE TALLERES/BO DESDE EXCEL
 # =======================
 @st.cache_data
 def load_talleres(path="data/talleres.xlsx"):
@@ -38,7 +38,7 @@ def load_talleres(path="data/talleres.xlsx"):
        st.error(f"No se encuentra el archivo requerido: {path}")
        return pd.DataFrame(columns=["Codigo", "Nombre", "Tipo"])
    try:
-       df = pd.read_excel(path, dtype=str)  # Forzar todo a string
+       df = pd.read_excel(path, dtype=str)
        df["Codigo"] = df["Codigo"].str.strip()
        df["Nombre"] = df["Nombre"].str.strip()
        df["Tipo"] = df["Tipo"].str.strip()
@@ -56,7 +56,7 @@ def get_worksheet(title):
    except gspread.exceptions.WorksheetNotFound:
        return spreadsheet.add_worksheet(title=title, rows="1000", cols="3")
 # =======================
-# PANTALLAS DE LA APP
+# PANTALLA 1: SELECCIÓN DE ALMACÉN
 # =======================
 if "pantalla" not in st.session_state:
    st.session_state.pantalla = "inicio"
@@ -64,9 +64,6 @@ if "tipo" not in st.session_state:
    st.session_state.tipo = None
 if "taller_nombre" not in st.session_state:
    st.session_state.taller_nombre = None
-# -----------------------
-# PANTALLA 1: VALIDACIÓN
-# -----------------------
 if st.session_state.pantalla == "inicio":
    st.title("🔑 Validación de Almacén")
    codigo_input = st.text_input("Introduce el código de almacén:")
@@ -90,9 +87,9 @@ if st.session_state.pantalla == "inicio":
                st.rerun()
        else:
            st.error("❌ Código no encontrado en el Excel de talleres/BO.")
-# -----------------------
-# PANTALLA 2: REGISTRO
-# -----------------------
+# =======================
+# PANTALLA 2: REGISTRO DE NÚMEROS DE SERIE
+# =======================
 if st.session_state.pantalla == "registro":
    st.title("📋 Registro de Números de Serie")
    st.markdown(f"""
@@ -103,28 +100,20 @@ if st.session_state.pantalla == "registro":
    worksheet = get_worksheet(st.session_state.tipo)
    if "serie_leidas" not in st.session_state:
        st.session_state.serie_leidas = []
-   # Campo de entrada con autofoco
-   numero_serie = st.text_input("Número de serie (escanea y pulsa enter)", key="serie_input")
-   # Forzar autofoco con JS para móviles
-   st.markdown(
-       """
-<script>
-       var input = window.parent.document.querySelector('input[data-testid="stTextInput"][aria-label="Número de serie (escanea y pulsa enter)"]');
-       if (input) { input.focus(); }
-</script>
-       """,
-       unsafe_allow_html=True
-   )
-   if st.button("Registrar número de serie") and numero_serie:
-       numero_serie = numero_serie.strip()
-       if numero_serie not in st.session_state.serie_leidas:
-           tz = pytz.timezone("Europe/Madrid")
-           fecha = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
-           worksheet.append_row([numero_serie, st.session_state.taller_nombre, fecha])
-           st.session_state.serie_leidas.append(numero_serie)
-           st.success(f"✅ Registrado número de serie: {numero_serie}")
-       else:
-           st.info(f"🔁 El número de serie {numero_serie} ya ha sido registrado en esta sesión.")
+   # Usamos un form para registrar al pulsar Enter
+   with st.form(key="form_registro", clear_on_submit=True):
+       numero_serie = st.text_input("Número de serie (Enter para registrar)")
+       submit_btn = st.form_submit_button("Registrar número de serie")
+       if submit_btn and numero_serie:
+           numero_serie = numero_serie.strip()
+           if numero_serie not in st.session_state.serie_leidas:
+               tz = pytz.timezone("Europe/Madrid")
+               fecha = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
+               worksheet.append_row([numero_serie, st.session_state.taller_nombre, fecha])
+               st.session_state.serie_leidas.append(numero_serie)
+               st.success(f"✅ Registrado número de serie: {numero_serie}")
+           else:
+               st.info(f"🔁 El número de serie {numero_serie} ya ha sido registrado en esta sesión.")
    if st.session_state.serie_leidas:
        st.subheader("Números de serie registrados en esta sesión:")
        for i, s in enumerate(st.session_state.serie_leidas, 1):
